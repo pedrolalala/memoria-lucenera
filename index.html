@@ -1,20 +1,162 @@
-<!-- HTML template for the frontend react app: https://developer.mozilla.org/en-US/docs/Web/HTML -->
-<!doctype html>
-<html lang="en">
+<!-- HTML template for the frontend react app: https://developer.mozilla.org/en-US/docs/Web/HTML --><!doctype html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memoria Lucenera</title>
-    <meta name="description" content="Memoria Lucenera" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <title>Memória Lucenera</title>
+    <meta name="description" content="Base de conhecimento da Lucenera" />
     <meta name="author" content="Skip (https://goskip.dev)" />
     <meta property="og:image" content="/og-image.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+
+    <!-- SPEC-164: a interface nova é o React (#root). O app estático antigo
+         (SPEC-129, public/app/) só é carregado em /legado, sem cadastro aberto
+         e sem modo demonstração. -->
+    <script>
+      if (location.pathname.indexOf('/legado') === 0) {
+        document.documentElement.classList.add('legado')
+        document.write(
+          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />' +
+            '<link rel="stylesheet" href="/app/styles.css" />',
+        )
+      }
+    </script>
+    <style>
+      html:not(.legado) #authView,
+      html:not(.legado) #appView,
+      html:not(.legado) #modalRoot,
+      html:not(.legado) #toast,
+      html:not(.legado) .legado-aviso {
+        display: none !important;
+      }
+      html.legado #root,
+      html.legado #signUpBtn,
+      html.legado .demo-access {
+        display: none !important;
+      }
+      .legado-aviso {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 9999;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #0f172a;
+        color: #f8fafc;
+        font: 500 13px/1.4 system-ui, sans-serif;
+        text-decoration: none;
+      }
+    </style>
   </head>
 
   <body>
     <div id="root"></div>
+
+    <!-- App antigo (somente /legado). -->
+    <a class="legado-aviso" href="/">Versão anterior. Ir para a Memória Lucenera atual</a>
+    <div id="authView" class="auth-view">
+      <section class="auth-intro">
+        <span class="mark">L</span>
+        <h1>Memória<br />Lucenera</h1>
+        <p>Conhecimento institucional, organizado para evoluir.</p>
+        <div class="auth-note">
+          Conhecimentos, experiências, decisões e conexões da Lucenera em um só lugar.
+        </div>
+      </section>
+      <section class="auth-card">
+        <div class="eyebrow">LUCENERA</div>
+        <h2>Acesse a memória da empresa</h2>
+        <p class="muted">Use sua conta autorizada para acessar a base de conhecimento.</p>
+        <form id="authForm">
+          <label
+            >E-mail<input
+              id="email"
+              type="email"
+              placeholder="voce@lucenera.com.br"
+              required="" /></label
+          ><label
+            >Senha<input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              minlength="6"
+              required="" /></label
+          ><button class="btn primary full" type="submit">Entrar</button>
+        </form>
+        <button id="forgotPasswordBtn" class="text-button" type="button">Esqueci minha senha</button
+        ><button id="signUpBtn" class="text-button">Criar uma conta</button>
+        <p id="authMessage" class="form-message"></p>
+        <div class="demo-access">
+          <strong>Quer explorar primeiro?</strong><br />Entre no modo de demonstração sem acessar
+          dados empresariais.<button id="demoBtn" class="btn secondary full">
+            Abrir demonstração
+          </button>
+        </div>
+      </section>
+    </div>
+    <div id="appView" class="app hidden">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <span class="mark">L</span><span>Memória <em>Lucenera</em></span
+          ><button id="closeNav" class="icon mobile-only">×</button>
+        </div>
+        <nav id="nav"></nav>
+        <div class="sidebar-bottom">
+          <button id="settingsBtn" class="user-card">
+            <span class="avatar">ML</span
+            ><span
+              ><b id="userName">Memória Lucenera</b><small id="userMode">Demonstração</small></span
+            ><span>⋯</span>
+          </button>
+        </div>
+      </aside>
+      <main>
+        <header class="topbar">
+          <button id="openNav" class="icon mobile-only">☰</button>
+          <div id="breadcrumb" class="breadcrumb">Início</div>
+          <div class="top-actions">
+            <button id="globalSearch" class="search-trigger">
+              ⌕ <span>Pesquisar</span><kbd>⌘ K</kbd></button
+            ><button id="quickAdd" class="btn primary">
+              ＋ <span class="hide-sm">Adicionar memória</span>
+            </button>
+          </div>
+        </header>
+        <div id="content" class="content"></div>
+      </main>
+    </div>
+    <div id="modalRoot"></div>
+    <div id="toast"></div>
+
+    <script>
+      window.MEMORIA_CONFIG = Object.freeze({
+        appName: "Memória Lucenera",
+        supabaseUrl: "%VITE_SUPABASE_URL%",
+        supabasePublishableKey: "%VITE_SUPABASE_PUBLISHABLE_KEY%",
+        databaseSchema: "memoria",
+        storageBucket: "lucenera-memory-files",
+        passwordRecoveryRedirect: "",
+      });
+      if (document.documentElement.classList.contains('legado')) {
+        document.write(
+          [
+            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+            'https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js',
+            '/app/sso.js',
+            '/app/app.js',
+            '/app/long-document-core.js',
+            '/app/memory-organization-core.js',
+            '/app/supabase-adapter.js',
+          ]
+            .map(function (src) {
+              return '<script src="' + src + '"></script>'
+            })
+            .join(''),
+        )
+      }
+    </script>
+
     <!-- @skip-protected: Do not remove. Required for app features. -->
     <script src="https://goskip.dev/skip.js"></script>
     <!-- @skip-protected: Do not remove. App entrypoint. -->
